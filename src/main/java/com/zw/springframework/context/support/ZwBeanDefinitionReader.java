@@ -1,6 +1,5 @@
 package com.zw.springframework.context.support;
 
-import com.zw.springframework.config.ZwBeanDefinition;
 import com.zw.springframework.support.ZwAbstractBeanDefinition;
 
 import java.io.File;
@@ -62,7 +61,7 @@ public class ZwBeanDefinitionReader {
     }
 
     //每注册一个bean则返回一个BeanDefinition对象
-    public ZwBeanDefinition registerBean(String className) {
+    public ZwAbstractBeanDefinition registerBean(String className) {
         if(registerBeanClasses.contains(className)){
             ZwAbstractBeanDefinition zwBeanDefinition = new ZwAbstractBeanDefinition();
             zwBeanDefinition.setBeanClassName(className);

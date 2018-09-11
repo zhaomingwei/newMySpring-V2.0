@@ -5,6 +5,7 @@ import com.zw.springframework.annotation.Controller;
 import com.zw.springframework.annotation.Service;
 import com.zw.springframework.config.ZwBeanDefinition;
 import com.zw.springframework.core.util.ZwAssert;
+import com.zw.springframework.support.ZwAbstractBeanDefinition;
 import com.zw.springframework.support.ZwBeanWrapper;
 
 import java.lang.reflect.Field;
@@ -56,7 +57,7 @@ public class ZwClasspathXmlApplicationContext {
         for(Map.Entry<String, ZwBeanDefinition> entry : this.beanDefinitionMap.entrySet()){
             //是否延迟加载
             if(!entry.getValue().isLazyInit()){
-                getBean(entry.getValue());
+                getBean(entry.getKey());
             }
         }
 
@@ -105,15 +106,16 @@ public class ZwClasspathXmlApplicationContext {
         }
     }
 
-    private Object getBean(ZwBeanDefinition zwBeanDefinition) {
+    private Object getBean(String beanClassName) {
+        ZwBeanDefinition zwBeanDefinition = this.beanDefinitionMap.get(beanClassName);
         Object instance = instanceBean(zwBeanDefinition);
         if(null==instance){
             return null;
         }
         ZwBeanWrapper zwBeanWrapper = new ZwBeanWrapper(instance);
-        beanWrapperMap.put(zwBeanDefinition.getBeanClassName(), zwBeanWrapper);
+        beanWrapperMap.put(beanClassName, zwBeanWrapper);
         //返回的这个WrapperInstance是我们通过动态代理后的对象
-        return beanWrapperMap.get(zwBeanDefinition.getBeanClassName()).getWrapperInstance();
+        return beanWrapperMap.get(beanClassName).getWrapperInstance();
     }
 
     private Object instanceBean(ZwBeanDefinition zwBeanDefinition) {
@@ -125,7 +127,7 @@ public class ZwClasspathXmlApplicationContext {
             }else{
                 Class<?> clazz = Class.forName(className);
                 instance = clazz.newInstance();//构造函数实例化一个变量
-                beanCacheMap.put(className, zwBeanDefinition);
+                beanCacheMap.put(className, instance);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -152,15 +154,20 @@ public class ZwClasspathXmlApplicationContext {
             }
 
             //注册bean
-            ZwBeanDefinition beanDefinition = this.reader.registerBean(className);
+            ZwAbstractBeanDefinition beanDefinition = this.reader.registerBean(className);
 
             if(null!=beanDefinition){
                 this.beanDefinitionMap.put(beanDefinition.getFactoryBeanName(), beanDefinition);
             }
+            //interfaces是clazz类所实现的接口列表
+            //数组顺序与implements 、 extends 子句中接口名顺序一致
+            //class Shimmer implements FloorWax, DessertTopping
+            //s.getClass().getInterfaces()[0]
+            // 的值为表示 FloorWax 接口的 Class 对象；
             Class<?>[] interfaces = clazz.getInterfaces();
             if(null!=interfaces && interfaces.length>0){
                 for(Class<?> cls:interfaces){
-                    //如果是多个实现类则会覆盖，需要自定义名称
+                    //如果是一个实现类对应多个接口，则此一个实现类对象赋值给他所实现的所有接口
                     this.beanDefinitionMap.put(cls.getName(), beanDefinition);
                 }
             }
