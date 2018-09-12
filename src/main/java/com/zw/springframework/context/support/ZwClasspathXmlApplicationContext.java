@@ -12,6 +12,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ZwClasspathXmlApplicationContext {
@@ -106,7 +107,7 @@ public class ZwClasspathXmlApplicationContext {
         }
     }
 
-    private Object getBean(String beanClassName) {
+    public Object getBean(String beanClassName) {
         ZwBeanDefinition zwBeanDefinition = this.beanDefinitionMap.get(beanClassName);
         Object instance = instanceBean(zwBeanDefinition);
         if(null==instance){
@@ -175,6 +176,11 @@ public class ZwClasspathXmlApplicationContext {
         }
     }
 
+    //获取所有beanNames
+    public String[] getBeanDefinitionNames(){
+        return this.beanDefinitionMap.keySet().toArray(new String[this.beanDefinitionMap.size()]);
+    }
+
     /**
      * 解析Bean定义资源文件的路径，处理多个资源文件字符串数组
      * @param configResources
@@ -190,6 +196,10 @@ public class ZwClasspathXmlApplicationContext {
         }else{
             this.configResources = null;
         }
+    }
+
+    public Properties getConfig(){
+        return this.reader.getConfig();
     }
 
 
