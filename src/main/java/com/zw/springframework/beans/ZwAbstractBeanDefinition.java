@@ -1,4 +1,4 @@
-package com.zw.springframework.support;
+package com.zw.springframework.beans;
 
 import com.zw.springframework.config.ZwBeanDefinition;
 

@@ -1,6 +1,6 @@
 package com.zw.springframework.context.support;
 
-import com.zw.springframework.support.ZwAbstractBeanDefinition;
+import com.zw.springframework.beans.ZwAbstractBeanDefinition;
 
 import java.io.File;
 import java.io.IOException;

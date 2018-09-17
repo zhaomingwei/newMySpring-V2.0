@@ -1,12 +1,14 @@
-package com.zw.springframework.context.support;
+package com.zw.springframework.context;
 
 import com.zw.springframework.annotation.Autowired;
 import com.zw.springframework.annotation.Controller;
 import com.zw.springframework.annotation.Service;
+import com.zw.springframework.beans.ZwBeanPostProcessor;
 import com.zw.springframework.config.ZwBeanDefinition;
+import com.zw.springframework.context.support.ZwBeanDefinitionReader;
 import com.zw.springframework.core.util.ZwAssert;
-import com.zw.springframework.support.ZwAbstractBeanDefinition;
-import com.zw.springframework.support.ZwBeanWrapper;
+import com.zw.springframework.beans.ZwAbstractBeanDefinition;
+import com.zw.springframework.beans.ZwBeanWrapper;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -109,12 +111,22 @@ public class ZwClasspathXmlApplicationContext {
 
     public Object getBean(String beanClassName) {
         ZwBeanDefinition zwBeanDefinition = this.beanDefinitionMap.get(beanClassName);
+
         Object instance = instanceBean(zwBeanDefinition);
         if(null==instance){
             return null;
         }
+        //生成通知事件
+        ZwBeanPostProcessor beanPostProcessor = new ZwBeanPostProcessor();
+        beanPostProcessor.postProcessBeforeInitialization(instance, beanClassName);
+
         ZwBeanWrapper zwBeanWrapper = new ZwBeanWrapper(instance);
+
+        zwBeanWrapper.setZwBeanPostProcessor(beanPostProcessor);
+
+        beanPostProcessor.postProcessAfterInitialization(instance, beanClassName);
         beanWrapperMap.put(beanClassName, zwBeanWrapper);
+
         //返回的这个WrapperInstance是我们通过动态代理后的对象
         return beanWrapperMap.get(beanClassName).getWrapperInstance();
     }

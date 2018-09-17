@@ -3,7 +3,7 @@ package com.zw.springframework.webmvc.servlet;
 import com.zw.springframework.annotation.Controller;
 import com.zw.springframework.annotation.RequestMapping;
 import com.zw.springframework.annotation.RequestParam;
-import com.zw.springframework.context.support.ZwClasspathXmlApplicationContext;
+import com.zw.springframework.context.ZwClasspathXmlApplicationContext;
 import com.zw.springframework.webmvc.ModelAndView;
 import com.zw.springframework.webmvc.ZwHandlerAdapter;
 import com.zw.springframework.webmvc.ZwHandlerMapping;

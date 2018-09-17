@@ -1,6 +1,10 @@
-package com.zw.springframework.support;
+package com.zw.springframework.beans;
 
 public class ZwBeanWrapper {
+
+    //还会用到  观察者  模式
+    //1、支持事件响应，会有一个监听
+    private ZwBeanPostProcessor zwBeanPostProcessor;
 
     //包装原始对象后的对象
     private Object wrapperInstance;
@@ -13,6 +17,15 @@ public class ZwBeanWrapper {
         this.wrapperInstance = instance;
         this.originalInstance = instance;
     }
+
+    public ZwBeanPostProcessor getZwBeanPostProcessor() {
+        return zwBeanPostProcessor;
+    }
+
+    public void setZwBeanPostProcessor(ZwBeanPostProcessor zwBeanPostProcessor) {
+        this.zwBeanPostProcessor = zwBeanPostProcessor;
+    }
+
 
     public Object getWrapperInstance() {
         return wrapperInstance;
