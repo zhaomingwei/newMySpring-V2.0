@@ -79,8 +79,8 @@ public class DispatchServlet extends HttpServlet {
         String[] beanNames = ctx.getBeanDefinitionNames();
         //遍历所有bean实例
         for(String beanName : beanNames){
-            Object object = ctx.getBean(beanName);
-            Class<?> clazz = object.getClass();
+            Object controller = ctx.getBean(beanName);
+            Class<?> clazz = controller.getClass();
             //如果该实例没有Controller注解，继续下一个
             if(!clazz.isAnnotationPresent(Controller.class)){
                 continue;
@@ -100,9 +100,9 @@ public class DispatchServlet extends HttpServlet {
                     continue;
                 }
                 RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
-                String regex = "/" + baseUrl + requestMapping.value().replaceAll("\\*", ".*").replaceAll("/+", "/");
+                String regex = ("/" + baseUrl + requestMapping.value().replaceAll("\\*", ".*")).replaceAll("/+", "/");
                 Pattern pattern = Pattern.compile(regex);
-                ZwHandlerMapping zwHandlerMapping = new ZwHandlerMapping(clazz, method, pattern);
+                ZwHandlerMapping zwHandlerMapping = new ZwHandlerMapping(controller, method, pattern);
                 this.handlerMappings.add(zwHandlerMapping);
                 System.out.println("Mapping: " + regex + " , " + method);
             }
@@ -112,9 +112,8 @@ public class DispatchServlet extends HttpServlet {
     //HandlerAdapters 用来动态匹配Method参数，包括类转换，动态赋值
     private void initHandlerAdapters(ZwClasspathXmlApplicationContext ctx) {
 
-        Map paramMap = new HashMap();
-
         for(ZwHandlerMapping handlerMapping : this.handlerMappings){
+            Map paramMap = new HashMap();
             //处理命名参数，就是前端传入的参数，也就是自定义名字的
             //该循环处理的是将参数位置与其下标对应
             Annotation[][] annotations = handlerMapping.getMethod().getParameterAnnotations();
@@ -193,7 +192,8 @@ public class DispatchServlet extends HttpServlet {
 
     }
 
-    private void processDispatchResult(HttpServletResponse resp, ModelAndView mv) {
+    //找到页面模板然后解析输出
+    private void processDispatchResult(HttpServletResponse resp, ModelAndView mv) throws Exception {
         if(mv == null){
             return;
         }
@@ -203,10 +203,12 @@ public class DispatchServlet extends HttpServlet {
         for(ZwViewResolver viewResolver:this.viewResolvers){
             if(mv.getViewName().equals(viewResolver.getTemplateName())){
                 String out = viewResolver.viewResolver(mv);
+                if(out!=null){
+                    resp.getWriter().write(out);
+                    break;
+                }
             }
         }
-
-
     }
 
     private ZwHandlerAdapter getHandlerAdapter(ZwHandlerMapping handler) {
@@ -233,8 +235,6 @@ public class DispatchServlet extends HttpServlet {
             }
             return handlerMapping;
         }
-
-
         return null;
     }
 }
