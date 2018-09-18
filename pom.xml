@@ -77,7 +77,7 @@
           <contextPath>/</contextPath>
           <connectors>
             <connector implementation="org.mortbay.jetty.nio.SelectChannelConnector">
-              <port>80</port>
+              <port>8088</port>
             </connector>
           </connectors>
           <scanIntervalSeconds>0</scanIntervalSeconds>

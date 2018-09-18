@@ -3,6 +3,7 @@ package com.zw.springframework.webmvc.servlet;
 import com.zw.springframework.annotation.Controller;
 import com.zw.springframework.annotation.RequestMapping;
 import com.zw.springframework.annotation.RequestParam;
+import com.zw.springframework.aop.ZwAopProxyUtils;
 import com.zw.springframework.context.ZwClasspathXmlApplicationContext;
 import com.zw.springframework.webmvc.ModelAndView;
 import com.zw.springframework.webmvc.ZwHandlerAdapter;
@@ -79,7 +80,13 @@ public class DispatchServlet extends HttpServlet {
         String[] beanNames = ctx.getBeanDefinitionNames();
         //遍历所有bean实例
         for(String beanName : beanNames){
-            Object controller = ctx.getBean(beanName);
+            Object proxy = ctx.getBean(beanName);
+            Object controller = null;
+            try {
+                controller = ZwAopProxyUtils.getTargetObject(proxy);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             Class<?> clazz = controller.getClass();
             //如果该实例没有Controller注解，继续下一个
             if(!clazz.isAnnotationPresent(Controller.class)){

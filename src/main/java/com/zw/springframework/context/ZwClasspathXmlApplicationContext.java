@@ -3,6 +3,7 @@ package com.zw.springframework.context;
 import com.zw.springframework.annotation.Autowired;
 import com.zw.springframework.annotation.Controller;
 import com.zw.springframework.annotation.Service;
+import com.zw.springframework.aop.ZwAopConfig;
 import com.zw.springframework.beans.ZwBeanPostProcessor;
 import com.zw.springframework.config.ZwBeanDefinition;
 import com.zw.springframework.context.support.ZwBeanDefinitionReader;
@@ -11,11 +12,14 @@ import com.zw.springframework.beans.ZwAbstractBeanDefinition;
 import com.zw.springframework.beans.ZwBeanWrapper;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ZwClasspathXmlApplicationContext {
 
@@ -109,26 +113,52 @@ public class ZwClasspathXmlApplicationContext {
         }
     }
 
-    public Object getBean(String beanClassName) {
+    public Object getBean(String beanClassName){
         ZwBeanDefinition zwBeanDefinition = this.beanDefinitionMap.get(beanClassName);
+        try {
+            Object instance = instanceBean(zwBeanDefinition);
+            if(null==instance){
+                return null;
+            }
+            //生成通知事件
+            ZwBeanPostProcessor beanPostProcessor = new ZwBeanPostProcessor();
+            beanPostProcessor.postProcessBeforeInitialization(instance, beanClassName);
 
-        Object instance = instanceBean(zwBeanDefinition);
-        if(null==instance){
-            return null;
+            ZwBeanWrapper zwBeanWrapper = new ZwBeanWrapper(instance);
+            zwBeanWrapper.setAopConfig(instationAopConfig(zwBeanDefinition));
+            zwBeanWrapper.setZwBeanPostProcessor(beanPostProcessor);
+
+            beanPostProcessor.postProcessAfterInitialization(instance, beanClassName);
+            beanWrapperMap.put(beanClassName, zwBeanWrapper);
+        }catch (Exception e){
+            e.printStackTrace();
         }
-        //生成通知事件
-        ZwBeanPostProcessor beanPostProcessor = new ZwBeanPostProcessor();
-        beanPostProcessor.postProcessBeforeInitialization(instance, beanClassName);
-
-        ZwBeanWrapper zwBeanWrapper = new ZwBeanWrapper(instance);
-
-        zwBeanWrapper.setZwBeanPostProcessor(beanPostProcessor);
-
-        beanPostProcessor.postProcessAfterInitialization(instance, beanClassName);
-        beanWrapperMap.put(beanClassName, zwBeanWrapper);
-
         //返回的这个WrapperInstance是我们通过动态代理后的对象
-        return beanWrapperMap.get(beanClassName).getWrapperInstance();
+        return beanWrapperMap.get(beanClassName).getOriginalInstance();
+    }
+
+    private ZwAopConfig instationAopConfig(ZwBeanDefinition beanDefinition) throws Exception {
+        ZwAopConfig zwAopConfig = new ZwAopConfig();
+        String expression = reader.getConfig().getProperty("pointCut");
+        String[] before = reader.getConfig().getProperty("aspectBefore").split("\\s");
+        String[] after = reader.getConfig().getProperty("aspectAfter").split("\\s");
+
+        String className = beanDefinition.getBeanClassName();
+        Class<?> clazz = Class.forName(className);
+
+        Pattern pattern = Pattern.compile(expression);
+
+        Class aspectClass = Class.forName(before[0]);
+
+        //这里都是原生的方法
+        for(Method m : clazz.getMethods()){
+            Matcher matcher = pattern.matcher(m.toString());
+            if(matcher.matches()){
+                //能满足切面规则的类，添加的AOP配置中
+                zwAopConfig.put(m, aspectClass.newInstance(), new Method[]{aspectClass.getMethod(before[1]),aspectClass.getMethod(after[1])});
+            }
+        }
+        return zwAopConfig;
     }
 
     private Object instanceBean(ZwBeanDefinition zwBeanDefinition) {
